@@ -124,9 +124,20 @@ public class MapPanel extends JPanel
 				transform = t;
 				repaint();
 			}
+
+			@Override
+			public void mouseWheelMoved(MouseWheelEvent e)
+			{
+				if(geo == null)
+					return;
+				final double r = e.getPreciseWheelRotation();
+				applyZoom(Math.pow(1.2, -Math.signum(r)) * Math.abs(r));
+				e.consume();
+			}
 		};
 		addMouseMotionListener(mouse);
 		addMouseListener(mouse);
+		addMouseWheelListener(mouse);
 	}
 
 	public void setGeo(Geometry geo)
@@ -135,6 +146,7 @@ public class MapPanel extends JPanel
 			return;
 		zoomInAction.setEnabled(geo != null);
 		zoomOutAction.setEnabled(geo != null);
+		setCursor(Cursor.getPredefinedCursor(geo != null ? Cursor.MOVE_CURSOR : Cursor.DEFAULT_CURSOR));
 		this.geo = geo;
 		calculateBoundingBox();
 		shapes.clear();
