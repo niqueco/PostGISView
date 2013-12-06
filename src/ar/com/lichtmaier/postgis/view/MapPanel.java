@@ -6,10 +6,7 @@ import java.awt.geom.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.swing.AbstractAction;
-import javax.swing.Action;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
+import javax.swing.*;
 
 import org.postgis.Geometry;
 import org.postgis.LinearRing;
@@ -39,7 +36,8 @@ public class MapPanel extends JPanel
 
 		ZoomInAction()
 		{
-			super("+");
+			super("+", new ImageIcon(MapPanel.class.getResource("zoom-in.png"), "Zoom in"));
+			putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke('+'));
 			setEnabled(false);
 		}
 
@@ -57,7 +55,7 @@ public class MapPanel extends JPanel
 
 		ZoomOutAction()
 		{
-			super("-");
+			super("-", new ImageIcon(MapPanel.class.getResource("zoom-out.png"), "Zoom out"));
 			setEnabled(false);
 		}
 
