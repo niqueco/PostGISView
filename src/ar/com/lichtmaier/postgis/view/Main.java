@@ -47,6 +47,7 @@ public class Main extends JPanel
 		final JTable table = new JTable();
 		table.setModel(resultsModel);
 		final MapPanel mapPanel = new MapPanel();
+		final MapInfoPanel mapInfoPanel = new MapInfoPanel(this);
 		table.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
 			@Override
 			public void valueChanged(ListSelectionEvent e)
@@ -62,15 +63,18 @@ public class Main extends JPanel
 					geo = resultsModel.getGeo(r).getGeometry();
 				}
 				mapPanel.setGeo(geo);
+				mapInfoPanel.setGeo(geo);
 			}
 		} );
 		JPanel right = new JPanel();
 		right.setLayout(new BorderLayout());
 		right.add(mapPanel, BorderLayout.CENTER);
 		JToolBar mapToolbar = new JToolBar();
+		mapToolbar.setFloatable(false);
 		mapToolbar.add(mapPanel.zoomInAction);
 		mapToolbar.add(mapPanel.zoomOutAction);
 		right.add(mapToolbar, BorderLayout.NORTH);
+		right.add(mapInfoPanel, BorderLayout.SOUTH);
 		add(new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, new JScrollPane(table), right), BorderLayout.CENTER);
 		JToolBar toolbar = new JToolBar();
 		toolbar.setFloatable(false);
