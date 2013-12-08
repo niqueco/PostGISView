@@ -60,7 +60,8 @@ public class Main extends JPanel
 				} else
 				{
 					int r = table.convertRowIndexToModel(selectedRow);
-					geo = resultsModel.getGeo(r).getGeometry();
+					final PGgeometry x = resultsModel.getGeo(r);
+					geo = (x != null) ? x.getGeometry() : null;
 				}
 				mapPanel.setGeo(geo);
 				mapInfoPanel.setGeo(geo);
