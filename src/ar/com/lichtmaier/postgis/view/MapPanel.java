@@ -1,10 +1,15 @@
 package ar.com.lichtmaier.postgis.view;
 
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
 import java.awt.geom.*;
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Future;
 
 import javax.swing.*;
 
@@ -218,16 +223,79 @@ public class MapPanel extends JPanel
 			return;
 		
 		Graphics2D g = (Graphics2D)gg.create();
-		
+
 		g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 		g.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY);
-		g.setStroke(new BasicStroke((int)(2 / transform.getScaleX()), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
 		g.transform(transform);
+		g.setStroke(new BasicStroke((int)(2 / transform.getScaleX()), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+
+		Rectangle clip = g.getClipBounds();
+		try
+		{
+			Point2D.Double p = new Point2D.Double(clip.getX(), clip.getMaxY());
+			projection.inverseTransform(p, p);
+			final int zoom = getOSMZoom();
+			final Tile orig = Tile.fromCoords(p, zoom);
+			Tile t = orig;
+			int dx = 0, dy = 0;
+			do {
+				t.getCorner1(p);
+				projection.transform(p, p);
+				Point2D.Double q = t.getCorner2(null);
+				projection.transform(q, q);
+				final Future<Image> f = t.getImage(this);
+				if(f.isDone())
+				{
+					g.drawImage(f.get(), (int)p.x, (int)p.y, (int)(q.x - p.x), (int)(q.y - p.y), null);
+					g.drawRect((int)p.x, (int)p.y, (int)(q.x - p.x), (int)(q.y - p.y));
+				}
+				dx++;
+				t = new Tile(orig.x + dx, orig.y + dy, zoom);
+				t.getCorner1(p);
+				projection.transform(p, p);
+				if(p.x > clip.getMaxX())
+				{
+					dx = 0;
+					dy++;
+					t = new Tile(orig.x + dx, orig.y + dy, zoom);
+					t.getCorner1(p);
+					projection.transform(p, p);
+					if(p.y < clip.getMinY())
+						break;
+				}
+				transform.transform(p, p);
+			} while(true);
+		} catch(Exception e)
+		{
+			e.printStackTrace();
+		}
 
 		for(Shape shape : shapes)
 			g.draw(shape);
 	}
+
+	final static private double log2 = Math.log(2);
 	
+	private int getOSMZoom()
+	{
+		try
+		{
+			Point2D.Double p = new Point2D.Double(0, 0);
+			transform.inverseTransform(p, p);
+			projection.inverseTransform(p, p);
+			Point2D.Double q = new Point2D.Double(getWidth(), getHeight());
+			transform.inverseTransform(q, q);
+			projection.inverseTransform(q, q);
+			double latrange = (q.x - p.x);
+			double longrange = (p.y - q.y);
+			return (int)Math.max((Math.floor(Math.log((360.0/longrange) * (getWidth() / 256.0)) / log2)),
+				Math.floor((Math.log((180.0/latrange) * (getHeight() / 256.0)) / log2)));
+		} catch(NoninvertibleTransformException e)
+		{
+			throw new RuntimeException(e);
+		}
+	}
+
 	void calculateTransform()
 	{
 		double widthMeters = maxCorner.x - minCorner.x;
@@ -246,5 +314,16 @@ public class MapPanel extends JPanel
 		zoom.translate(-getWidth() / 2, -getHeight() / 2);
 		transform.preConcatenate(zoom);
 		repaint();
+	}
+
+	public void tileLoaded(Tile tile, BufferedImage imagen)
+	{
+		Point2D.Double p = tile.getCorner1(null);
+		projection.transform(p, p);
+		Point2D.Double q = tile.getCorner2(null);
+		projection.transform(q, q);
+		transform.transform(p, p);
+		transform.transform(q, q);
+		repaint((int)p.x, (int)p.y, (int)(q.x - p.x), (int)(q.y - p.y));
 	}
 }
