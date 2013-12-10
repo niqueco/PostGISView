@@ -68,6 +68,7 @@ public class Main extends JPanel
 				mapInfoPanel.setGeo(geo);
 			}
 		} );
+		table.setAutoCreateRowSorter(true);
 		JPanel right = new JPanel();
 		right.setLayout(new BorderLayout());
 		right.add(mapPanel, BorderLayout.CENTER);
