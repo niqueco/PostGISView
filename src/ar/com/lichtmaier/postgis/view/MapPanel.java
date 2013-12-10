@@ -77,7 +77,6 @@ public class MapPanel extends JPanel
 		
 		projection = new MercatorProjection();
 		projection.initialize();
-		System.out.println(projection);
 		
 		final MouseAdapter mouse = new MouseAdapter() {
 			@Override
@@ -206,12 +205,8 @@ public class MapPanel extends JPanel
 			if(point.y > ymax)
 				ymax = point.y;
 		}
-		System.out.println("min=" + xmin + ", " + ymin);
-		System.out.println("max=" + xmax+ ", " + ymax);
 		projection.transform(xmin, ymin, minCorner);
 		projection.transform(xmax, ymax, maxCorner);
-		System.out.println("min=" + minCorner);
-		System.out.println("max=" + maxCorner);
 	}
 
 	@Override

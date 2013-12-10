@@ -60,7 +60,6 @@ public class QueryTableModel extends AbstractTableModel
 			@Override
 			protected Void doInBackground() throws Exception
 			{
-				System.out.println("execute!");
 				Connection c = main.getConnection();
 				try(ResultSet rs = c.createStatement().executeQuery(query))
 				{
@@ -114,7 +113,6 @@ public class QueryTableModel extends AbstractTableModel
 			@Override
 			protected void done()
 			{
-				System.out.println("Done!");
 			};
 		}.execute();
 	}
