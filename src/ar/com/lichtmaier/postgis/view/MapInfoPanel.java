@@ -57,7 +57,8 @@ public class MapInfoPanel extends JPanel
 			{
 				Map<String, Object> r = new HashMap<String, Object>();
 				Connection c = main.getConnection();
-				try(PreparedStatement ps = c.prepareStatement("select ST_IsValidReason(?)"))
+				PreparedStatement ps = c.prepareStatement("select ST_IsValidReason(?)");
+				try
 				{
 					ps.setObject(1, new PGgeometry(geo));
 					ResultSet rs = ps.executeQuery();
@@ -66,6 +67,9 @@ public class MapInfoPanel extends JPanel
 						r.put("valid", rs.getString(1));
 					}
 					return r;
+				} finally
+				{
+					ps.close();
 				}
 			}
 			

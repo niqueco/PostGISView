@@ -25,7 +25,7 @@ public class MapPanel extends JPanel
 	private static final long serialVersionUID = 1L;
 
 	private Geometry geo;
-	private List<Shape> shapes = new ArrayList<>();
+	private List<Shape> shapes = new ArrayList<Shape>();
 
 	private final Point2D.Double minCorner = new Point2D.Double(), maxCorner = new Point2D.Double();
 	

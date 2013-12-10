@@ -19,7 +19,7 @@ public class QueryTableModel extends AbstractTableModel
 	private String[] headers;
 	private Class<?>[] types;
 	
-	private List<Object[]> rows = new ArrayList<>();
+	private List<Object[]> rows = new ArrayList<Object[]>();
 
 	@Override
 	public int getRowCount()
@@ -61,8 +61,10 @@ public class QueryTableModel extends AbstractTableModel
 			protected Void doInBackground() throws Exception
 			{
 				Connection c = main.getConnection();
-				try(ResultSet rs = c.createStatement().executeQuery(query))
+				ResultSet rs = null;
+				try
 				{
+					rs = c.createStatement().executeQuery(query);
 					ResultSetMetaData md = rs.getMetaData();
 					final int columnCount = md.getColumnCount();
 					newHeaders = new String[columnCount];
@@ -78,6 +80,10 @@ public class QueryTableModel extends AbstractTableModel
 				} catch(SQLException e)
 				{
 					e.printStackTrace();
+				} finally
+				{
+					if(rs != null)
+						rs.close();
 				}
 				return null;
 			}
