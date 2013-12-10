@@ -3,10 +3,11 @@ package ar.com.lichtmaier.postgis.view;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
 import javax.swing.table.AbstractTableModel;
 
@@ -61,10 +62,10 @@ public class QueryTableModel extends AbstractTableModel
 			protected Void doInBackground() throws Exception
 			{
 				Connection c = main.getConnection();
-				ResultSet rs = null;
+				Statement stmt = c.createStatement();
 				try
 				{
-					rs = c.createStatement().executeQuery(query);
+					ResultSet rs = stmt.executeQuery(query);
 					ResultSetMetaData md = rs.getMetaData();
 					final int columnCount = md.getColumnCount();
 					newHeaders = new String[columnCount];
@@ -77,13 +78,9 @@ public class QueryTableModel extends AbstractTableModel
 							row[i] = rs.getObject(i + 1);
 						publish(row);
 					}
-				} catch(SQLException e)
-				{
-					e.printStackTrace();
 				} finally
 				{
-					if(rs != null)
-						rs.close();
+					stmt.close();
 				}
 				return null;
 			}
@@ -119,6 +116,14 @@ public class QueryTableModel extends AbstractTableModel
 			@Override
 			protected void done()
 			{
+				try
+				{
+					get();
+				} catch(Exception e)
+				{
+					e.printStackTrace();
+					JOptionPane.showMessageDialog(main, e.getLocalizedMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+				}
 			};
 		}.execute();
 	}

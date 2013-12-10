@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingWorker;
 
@@ -82,6 +83,7 @@ public class MapInfoPanel extends JPanel
 				} catch(Exception e)
 				{
 					e.printStackTrace();
+					JOptionPane.showMessageDialog(MapInfoPanel.this, e.getLocalizedMessage(), "Error", JOptionPane.ERROR_MESSAGE);
 				}
 			}
 		};
