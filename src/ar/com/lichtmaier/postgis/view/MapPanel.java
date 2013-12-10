@@ -174,17 +174,20 @@ public class MapPanel extends JPanel
 
 	private void process(org.postgis.Polygon poly)
 	{
-		LinearRing ring = poly.getRing(0);
-		Path2D.Float path = new Path2D.Float();
-		Point2D.Double point = new Point2D.Double();
-		final org.postgis.Point[] points = ring.getPoints();
-		projection.transform(points[0].x, points[0].y, point);
-		path.moveTo(point.x, point.y);
-		for(int i = 1 ; i < points.length ; i++)
+		Path2D.Double path = new Path2D.Double(Path2D.WIND_EVEN_ODD);
+		for(int r = 0; r < poly.numRings() ; r++)
 		{
-			org.postgis.Point p = points[i];
-			projection.transform(p.x, p.y, point);
-			path.lineTo(point.x, point.y);
+			LinearRing ring = poly.getRing(r);
+			final org.postgis.Point[] points = ring.getPoints();
+			Point2D.Double point = new Point2D.Double();
+			projection.transform(points[0].x, points[0].y, point);
+			path.moveTo(point.x, point.y);
+			for(int i = 1 ; i < points.length ; i++)
+			{
+				org.postgis.Point p = points[i];
+				projection.transform(p.x, p.y, point);
+				path.lineTo(point.x, point.y);
+			}
 		}
 		shapes.add(new Area(path));
 	}
