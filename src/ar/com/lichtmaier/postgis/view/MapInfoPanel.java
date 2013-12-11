@@ -7,6 +7,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -22,12 +24,14 @@ public class MapInfoPanel extends JPanel
 
 	private Geometry geo;
 	final private Main main;
+	final private MapPanel mapPanel;
 
 	final JLabel validLabel = new JLabel();
 
-	public MapInfoPanel(Main main)
+	public MapInfoPanel(Main main, MapPanel mapPanel)
 	{
 		this.main = main;
+		this.mapPanel = mapPanel;
 		
 		setLayout(new GridBagLayout());
 		
@@ -43,6 +47,8 @@ public class MapInfoPanel extends JPanel
 	{
 		return geo;
 	}
+
+	final static private Pattern coordsPattern = Pattern.compile("\\[(-?\\d+(?:\\.\\d+)?) (-?\\d+(?:\\.\\d+)?)]");
 
 	public void setGeo(final Geometry geo)
 	{
@@ -79,7 +85,15 @@ public class MapInfoPanel extends JPanel
 			{
 				try
 				{
-					validLabel.setText((String)get().get("valid"));
+					final String validText = (String)get().get("valid");
+					validLabel.setText(validText);
+					Matcher m = coordsPattern.matcher(validText);
+					if(m.find())
+					{
+						double lon = Double.parseDouble(m.group(1));
+						double lat = Double.parseDouble(m.group(2));
+						mapPanel.addError(lon, lat);
+					}
 				} catch(Exception e)
 				{
 					e.printStackTrace();

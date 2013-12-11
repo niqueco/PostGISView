@@ -48,7 +48,7 @@ public class Main extends JPanel
 		final JTable table = new JTable();
 		table.setModel(resultsModel);
 		final MapPanel mapPanel = new MapPanel();
-		final MapInfoPanel mapInfoPanel = new MapInfoPanel(this);
+		final MapInfoPanel mapInfoPanel = new MapInfoPanel(this, mapPanel);
 		table.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
 			@Override
 			public void valueChanged(ListSelectionEvent e)

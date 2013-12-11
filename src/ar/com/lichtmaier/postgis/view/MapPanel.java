@@ -72,6 +72,7 @@ public class MapPanel extends JPanel
 	}
 	public Action zoomOutAction = new ZoomOutAction();
 
+	private List<Point2D.Double> errors = new ArrayList<Point2D.Double>();
 	
 	public MapPanel()
 	{
@@ -154,6 +155,7 @@ public class MapPanel extends JPanel
 		this.geo = geo;
 		calculateBoundingBox();
 		shapes.clear();
+		errors.clear();
 		calculateShapes(geo);
 		calculateTransform();
 		repaint();
@@ -275,6 +277,11 @@ public class MapPanel extends JPanel
 
 		for(Shape shape : shapes)
 			g.draw(shape);
+		g.setColor(Color.RED);
+		int w = (int)(30.0 / transform.getScaleX());
+		int h = (int)Math.abs(30.0 / transform.getScaleY());
+		for(Point2D.Double p : errors)
+			g.drawArc((int)p.x - (w / 2), (int)p.y - (h / 2), w, h, 0, 360);
 	}
 
 	final static private double log2 = Math.log(2);
@@ -328,5 +335,12 @@ public class MapPanel extends JPanel
 		transform.transform(p, p);
 		transform.transform(q, q);
 		repaint((int)p.x, (int)p.y, (int)(q.x - p.x), (int)(q.y - p.y));
+	}
+
+	public void addError(double lon, double lat)
+	{
+		Point2D.Double p = new Point2D.Double(lon, lat);
+		projection.transform(p, p);
+		errors.add(p);
 	}
 }
