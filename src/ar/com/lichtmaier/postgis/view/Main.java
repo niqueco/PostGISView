@@ -38,7 +38,7 @@ public class Main extends JPanel
 	}
 	final private Action executeQueryAction = new ExecuteQueryAction();
 
-	final private JTextField queryField = new JTextField("select entity, shape from geo where paclet='Country' limit 10");
+	final private JTextField queryField = new JTextField("select entity, point from geo_entities where point is not null limit 10");
 
 	private final QueryTableModel resultsModel = new QueryTableModel();
 
@@ -64,7 +64,8 @@ public class Main extends JPanel
 					final PGgeometry x = resultsModel.getGeo(r);
 					geo = (x != null) ? x.getGeometry() : null;
 				}
-				mapPanel.setGeo(geo);
+				mapPanel.reset();
+				mapPanel.addGeo(geo);
 				mapInfoPanel.setGeo(geo);
 			}
 		} );

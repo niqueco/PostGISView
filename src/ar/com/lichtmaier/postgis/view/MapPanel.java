@@ -13,6 +13,9 @@ import java.util.concurrent.Future;
 
 import javax.swing.*;
 
+import org.gavaghan.geodesy.Ellipsoid;
+import org.gavaghan.geodesy.GeodeticCalculator;
+import org.gavaghan.geodesy.GlobalCoordinates;
 import org.postgis.Geometry;
 import org.postgis.LinearRing;
 import org.postgis.MultiPolygon;
@@ -24,8 +27,9 @@ public class MapPanel extends JPanel
 {
 	private static final long serialVersionUID = 1L;
 
-	private Geometry geo;
-	private List<Shape> shapes = new ArrayList<Shape>();
+	final private List<Geometry> geos = new ArrayList<Geometry>();
+	final private List<Shape> shapes = new ArrayList<Shape>();
+	final private List<Point2D.Double> pointMarkers = new ArrayList<Point2D.Double>();
 
 	private final Point2D.Double minCorner = new Point2D.Double(), maxCorner = new Point2D.Double();
 	
@@ -88,7 +92,7 @@ public class MapPanel extends JPanel
 			@Override
 			public void mouseMoved(MouseEvent e)
 			{
-				if(geo == null)
+				if(geos.isEmpty() || transform == null)
 				{
 					coordsLabel.setText(null);
 					return;
@@ -133,7 +137,7 @@ public class MapPanel extends JPanel
 			@Override
 			public void mouseWheelMoved(MouseWheelEvent e)
 			{
-				if(geo == null)
+				if(geos.isEmpty())
 					return;
 				final double r = e.getPreciseWheelRotation();
 				applyZoom(Math.pow(1.2, -Math.signum(r)) * Math.abs(r));
@@ -145,16 +149,15 @@ public class MapPanel extends JPanel
 		addMouseWheelListener(mouse);
 	}
 
-	public void setGeo(Geometry geo)
+	public void addGeo(Geometry geo)
 	{
-		if(geo == this.geo)
+		if(geos.contains(geo))
 			return;
 		zoomInAction.setEnabled(geo != null);
 		zoomOutAction.setEnabled(geo != null);
 		setCursor(Cursor.getPredefinedCursor(geo != null ? Cursor.MOVE_CURSOR : Cursor.DEFAULT_CURSOR));
-		this.geo = geo;
+		geos.add(geo);
 		calculateBoundingBox();
-		shapes.clear();
 		errors.clear();
 		calculateShapes(geo);
 		calculateTransform();
@@ -171,6 +174,13 @@ public class MapPanel extends JPanel
 			MultiPolygon multi = (MultiPolygon)g;
 			for(org.postgis.Polygon poly : multi.getPolygons())
 				process(poly);
+		} else if(g instanceof org.postgis.Point)
+		{
+			org.postgis.Point point = (org.postgis.Point)g;
+			pointMarkers.add(projection.transform(point.x, point.y, new Point2D.Double()));
+		} else
+		{
+			System.err.println("unknown geometry: " + g + " class: " + g.getClass());
 		}
 	}
 
@@ -196,27 +206,35 @@ public class MapPanel extends JPanel
 
 	private void calculateBoundingBox()
 	{
-		if(geo == null)
+		if(geos.isEmpty())
 			return;
-		int n = geo.numPoints();
 		double xmin = Double.MAX_VALUE;
 		double ymin = Double.MAX_VALUE;
 		double xmax = -Double.MAX_VALUE;
 		double ymax = -Double.MAX_VALUE;
-		for(int i = 0 ; i < n ; i++)
+		for(Geometry geo : geos)
 		{
-			org.postgis.Point point = geo.getPoint(i);
-			if(point.x < xmin)
-				xmin = point.x;
-			if(point.x > xmax)
-				xmax = point.x;
-			if(point.y < ymin)
-				ymin = point.y;
-			if(point.y > ymax)
-				ymax = point.y;
+			int shapePoints = geo.numPoints();
+			for(int i = 0 ; i < shapePoints ; i++)
+			{
+				org.postgis.Point point = geo.getPoint(i);
+				if(point.x < xmin)
+					xmin = point.x;
+				if(point.x > xmax)
+					xmax = point.x;
+				if(point.y < ymin)
+					ymin = point.y;
+				if(point.y > ymax)
+					ymax = point.y;
+			}
 		}
-		projection.transform(xmin, ymin, minCorner);
-		projection.transform(xmax, ymax, maxCorner);
+		GlobalCoordinates p1 = new GlobalCoordinates(ymin, xmin);
+		GlobalCoordinates p2 = new GlobalCoordinates(ymax, xmax);
+		double diagonal = Math.max(GeodeticCalculator.calculateGeodeticCurve(Ellipsoid.WGS84, p1, p2).getEllipsoidalDistance(), 10000);
+		p1 = GeodeticCalculator.calculateEndingGlobalCoordinates(Ellipsoid.WGS84, p1, 180 + 45, diagonal * 0.2);
+		p2 = GeodeticCalculator.calculateEndingGlobalCoordinates(Ellipsoid.WGS84, p2, 45, diagonal * 0.2);
+		projection.transform(p1.getLongitude(), p1.getLatitude(), minCorner);
+		projection.transform(p2.getLongitude(), p2.getLatitude(), maxCorner);
 	}
 
 	@Override
@@ -224,7 +242,7 @@ public class MapPanel extends JPanel
 	{
 		super.paintComponent(gg);
 		
-		if(geo == null)
+		if(geos.isEmpty())
 			return;
 		
 		Graphics2D g = (Graphics2D)gg.create();
@@ -281,6 +299,11 @@ public class MapPanel extends JPanel
 		int w = (int)(30.0 / transform.getScaleX());
 		int h = (int)Math.abs(30.0 / transform.getScaleY());
 		for(Point2D.Double p : errors)
+			g.drawArc((int)p.x - (w / 2), (int)p.y - (h / 2), w, h, 0, 360);
+		w/=10;
+		h/=10;
+		g.setColor(Color.BLUE);
+		for(Point2D.Double p : pointMarkers)
 			g.drawArc((int)p.x - (w / 2), (int)p.y - (h / 2), w, h, 0, 360);
 	}
 
@@ -342,5 +365,13 @@ public class MapPanel extends JPanel
 		Point2D.Double p = new Point2D.Double(lon, lat);
 		projection.transform(p, p);
 		errors.add(p);
+	}
+
+	public void reset()
+	{
+		geos.clear();
+		shapes.clear();
+		pointMarkers.clear();
+		repaint();
 	}
 }
