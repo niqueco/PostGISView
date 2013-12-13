@@ -38,7 +38,7 @@ public class Main extends JPanel
 	}
 	final private Action executeQueryAction = new ExecuteQueryAction();
 
-	final private JTextField queryField = new JTextField("select entity, point from geo_entities where point is not null limit 10");
+	final private JTextField queryField = new JTextField("select entity, point, shape from geo_entities where point is not null and shape is not null limit 10");
 
 	private final QueryTableModel resultsModel = new QueryTableModel();
 
@@ -53,22 +53,26 @@ public class Main extends JPanel
 			@Override
 			public void valueChanged(ListSelectionEvent e)
 			{
-				int selectedRow = table.getSelectedRow();
-				Geometry geo;
-				if(selectedRow == -1)
-				{
-					geo = null;
-				} else
-				{
-					int r = table.convertRowIndexToModel(selectedRow);
-					final PGgeometry x = resultsModel.getGeo(r);
-					geo = (x != null) ? x.getGeometry() : null;
-				}
+				if(e.getValueIsAdjusting())
+					return;
 				mapPanel.reset();
-				mapPanel.addGeo(geo);
-				mapInfoPanel.setGeo(geo);
+				mapInfoPanel.setGeo(null);
+				int columnCount = resultsModel.getColumnCount();
+				for(int r : table.getSelectedRows())
+				{
+					r = table.convertRowIndexToModel(r);
+					for(int col = 0 ; col < columnCount ; col++)
+						if(resultsModel.getColumnClass(col) == PGgeometry.class)
+						{
+							PGgeometry x = (PGgeometry)resultsModel.getValueAt(r, col);
+							Geometry geo = (x != null) ? x.getGeometry() : null;
+							mapPanel.addGeo(geo);
+							if(!(geo instanceof org.postgis.Point))
+								mapInfoPanel.setGeo(geo);
+						}
+				}
 			}
-		} );
+		});
 		table.setAutoCreateRowSorter(true);
 		JPanel right = new JPanel();
 		right.setLayout(new BorderLayout());

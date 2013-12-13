@@ -153,12 +153,9 @@ public class MapPanel extends JPanel
 	{
 		if(geos.contains(geo))
 			return;
-		zoomInAction.setEnabled(geo != null);
-		zoomOutAction.setEnabled(geo != null);
-		setCursor(Cursor.getPredefinedCursor(geo != null ? Cursor.MOVE_CURSOR : Cursor.DEFAULT_CURSOR));
+		setCursor(Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR));
 		geos.add(geo);
 		calculateBoundingBox();
-		errors.clear();
 		calculateShapes(geo);
 		calculateTransform();
 		repaint();
@@ -372,6 +369,10 @@ public class MapPanel extends JPanel
 		geos.clear();
 		shapes.clear();
 		pointMarkers.clear();
+		errors.clear();
+		zoomInAction.setEnabled(false);
+		zoomOutAction.setEnabled(false);
+		setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
 		repaint();
 	}
 }

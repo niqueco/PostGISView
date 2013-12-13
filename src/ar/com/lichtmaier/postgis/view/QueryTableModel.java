@@ -11,8 +11,6 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
 import javax.swing.table.AbstractTableModel;
 
-import org.postgis.PGgeometry;
-
 public class QueryTableModel extends AbstractTableModel
 {
 	private static final long serialVersionUID = 1L;
@@ -126,13 +124,5 @@ public class QueryTableModel extends AbstractTableModel
 				}
 			};
 		}.execute();
-	}
-
-	public PGgeometry getGeo(int r)
-	{
-		for(int i = 0 ; i < getColumnCount() ; i++)
-			if(getColumnClass(i) == PGgeometry.class)
-				return (PGgeometry)rows.get(r)[i];
-		return null;
 	}
 }
