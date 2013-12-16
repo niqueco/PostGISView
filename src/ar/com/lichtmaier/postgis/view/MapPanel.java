@@ -153,6 +153,8 @@ public class MapPanel extends JPanel
 	{
 		if(geos.contains(geo))
 			return;
+		zoomInAction.setEnabled(true);
+		zoomOutAction.setEnabled(true);
 		setCursor(Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR));
 		geos.add(geo);
 		calculateBoundingBox();
