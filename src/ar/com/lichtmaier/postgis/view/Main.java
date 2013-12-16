@@ -5,8 +5,11 @@ import java.awt.event.ActionEvent;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.prefs.Preferences;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
@@ -18,6 +21,8 @@ public class Main extends JPanel
 	private static final long serialVersionUID = 1L;
 
 	private Connection conn;
+
+	static Preferences prefs = Preferences.userNodeForPackage(Main.class);
 	
 	class ExecuteQueryAction extends AbstractAction
 	{
@@ -38,7 +43,7 @@ public class Main extends JPanel
 	}
 	final private Action executeQueryAction = new ExecuteQueryAction();
 
-	final private JTextField queryField = new JTextField("select entity, point, shape from geo_entities where point is not null and shape is not null limit 10");
+	final private JTextField queryField = new JTextField(prefs.get("query", "select entity, point, shape from geo_entities where point is not null and shape is not null limit 10"));
 
 	private final QueryTableModel resultsModel = new QueryTableModel();
 
@@ -89,6 +94,28 @@ public class Main extends JPanel
 		toolbar.add(queryField);
 		toolbar.add(executeQueryAction);
 		add(toolbar, BorderLayout.NORTH);
+		queryField.getDocument().addDocumentListener(new DocumentListener() {
+			@Override
+			public void removeUpdate(DocumentEvent e)
+			{
+				prefs.put("query", queryField.getText());
+			}
+			@Override
+			public void insertUpdate(DocumentEvent e)
+			{
+				prefs.put("query", queryField.getText());
+			}
+			@Override
+			public void changedUpdate(DocumentEvent e) { }
+		});
+		try
+		{
+			Class.forName("org.postgresql.Driver");
+		} catch(ClassNotFoundException e1)
+		{
+			e1.printStackTrace();
+			JOptionPane.showMessageDialog(this, "Error loading PostgreSQL driver class: " + e1.getLocalizedMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+		}
 	}
 	
 	public Connection getConnection() throws SQLException
