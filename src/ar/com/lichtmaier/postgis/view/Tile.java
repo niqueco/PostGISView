@@ -3,13 +3,17 @@ package ar.com.lichtmaier.postgis.view;
 import java.awt.Image;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.LinkedHashMap;
 import java.util.concurrent.*;
 
 import javax.imageio.ImageIO;
+import javax.imageio.stream.ImageInputStream;
 
 public class Tile
 {
@@ -146,23 +150,37 @@ public class Tile
 	public Future<Image> getImage(final MapPanel mp) throws IOException
 	{
 		Future<Image> image = imageCache.get(this);
+		final File f = getCachedFilename();
 		if(image == null)
 		{
-			image = pool.submit(new Callable<Image>() {
-				@Override
-				public Image call() throws Exception
-				{
-					final BufferedImage imagen = ImageIO.read(getUrl());
-					System.out.println("loaded " + Tile.this);
-					mp.tileLoaded(Tile.this, imagen);
-					return imagen;
-				}
-			});
+			if(f.canRead())
+				image = new CompletedFuture<Image>(ImageIO.read(f));
+			else
+			{
+				image = pool.submit(new Callable<Image>() {
+					@Override
+					public Image call() throws Exception
+					{
+						InputStream in = getUrl().openStream();
+						f.getParentFile().mkdirs();
+						in = new TeeInputStream(in, new FileOutputStream(f));
+						ImageInputStream iis = ImageIO.createImageInputStream(in);
+						BufferedImage imagen = ImageIO.read(iis);
+						mp.tileLoaded(Tile.this, imagen);
+						return imagen;
+					}
+				});
+			}
 			imageCache.put(this, image);
 		}
 		return image;
 	}
-	
+
+	protected File getCachedFilename()
+	{
+		return new File(getCacheDir(), "tile-"+x+'-'+y+'-'+zoom + ".png");
+	}
+
 	static ExecutorService pool = new ThreadPoolExecutor(0, 6,
                         60L, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>());
 
@@ -170,5 +188,53 @@ public class Tile
 	public String toString()
 	{
 		return "Tile [x=" + x + ", y=" + y + ", zoom=" + zoom + "]";
+	}
+
+	static File getCacheDir()
+	{
+		String home = System.getProperty("user.home");
+		if(System.getProperty("os.name").equals("Linux"))
+			return new File(home, ".cache/PostGISView");
+		return new File(home, ".PostGISView" + File.separator + "cache");
+	}
+}
+
+class CompletedFuture<T> implements Future<T>
+{
+	final private T data;
+
+	public CompletedFuture(T data)
+	{
+		this.data = data;
+	}
+
+	@Override
+	public boolean cancel(boolean mayInterruptIfRunning)
+	{
+		return false;
+	}
+
+	@Override
+	public boolean isCancelled()
+	{
+		return false;
+	}
+
+	@Override
+	public boolean isDone()
+	{
+		return true;
+	}
+
+	@Override
+	public T get() throws InterruptedException, ExecutionException
+	{
+		return data;
+	}
+
+	@Override
+	public T get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException
+	{
+		return data;
 	}
 }
