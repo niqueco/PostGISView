@@ -52,6 +52,7 @@ public class QueryTableModel extends AbstractTableModel
 	
 	void runQuery(final Main main, final String query)
 	{
+		main.executeQueryAction.setEnabled(false);
 		new SwingWorker<Void, Object[]>() {
 	
 			private String[] newHeaders;
@@ -114,6 +115,7 @@ public class QueryTableModel extends AbstractTableModel
 			@Override
 			protected void done()
 			{
+				main.executeQueryAction.setEnabled(true);
 				try
 				{
 					get();

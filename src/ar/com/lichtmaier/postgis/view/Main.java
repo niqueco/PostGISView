@@ -41,7 +41,7 @@ public class Main extends JPanel
 			resultsModel.runQuery(Main.this, query);
 		}
 	}
-	final private Action executeQueryAction = new ExecuteQueryAction();
+	final Action executeQueryAction = new ExecuteQueryAction();
 
 	final private JTextField queryField = new JTextField(prefs.get("query", "select entity, point, shape from geo_entities where point is not null and shape is not null limit 10"));
 
