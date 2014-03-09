@@ -43,6 +43,23 @@ public class Main extends JPanel
 	}
 	final Action executeQueryAction = new ExecuteQueryAction();
 
+	class ConfigAction extends AbstractAction
+	{
+		private static final long serialVersionUID = 1L;
+
+		public ConfigAction()
+		{
+			super("Configure");
+		}
+
+		@Override
+		public void actionPerformed(ActionEvent e)
+		{
+			new ConfigDialog(Main.this);
+		}
+	}
+	final Action configAction = new ConfigAction();
+
 	final private JTextField queryField = new JTextField(prefs.get("query", "select entity, point, shape from geo_entities where point is not null and shape is not null limit 10"));
 
 	private final QueryTableModel resultsModel = new QueryTableModel();
@@ -93,6 +110,7 @@ public class Main extends JPanel
 		toolbar.setFloatable(false);
 		toolbar.add(queryField);
 		toolbar.add(executeQueryAction);
+		toolbar.add(configAction);
 		add(toolbar, BorderLayout.NORTH);
 		queryField.getDocument().addDocumentListener(new DocumentListener() {
 			@Override
@@ -123,7 +141,15 @@ public class Main extends JPanel
 		synchronized(this)
 		{
 			if(conn == null || !conn.isValid(5))
-				conn = DriverManager.getConnection("jdbc:postgresql://turing.wolfram.com/geolookup", "geolookup", "geo.lookup");
+			{
+				String host = prefs.get("host", null);
+				String database = prefs.get("database", null);
+				String user = prefs.get("user", null);
+				String password = prefs.get("password", null);
+				if(host == null || database == null || user == null || password == null)
+					return null;
+				conn = DriverManager.getConnection("jdbc:postgresql://" + host + '/' + database, user, password);
+			}
 			try
 			{
 				((org.postgresql.PGConnection)conn).addDataType("geometry",Class.forName("org.postgis.PGgeometry"));
