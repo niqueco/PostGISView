@@ -50,6 +50,7 @@ public class Main extends JPanel
 		public ConfigAction()
 		{
 			super("Configure");
+			putValue(Action.SMALL_ICON, new ImageIcon(Main.class.getResource("settings.png")));
 		}
 
 		@Override
