@@ -16,10 +16,7 @@ import javax.swing.*;
 import org.gavaghan.geodesy.Ellipsoid;
 import org.gavaghan.geodesy.GeodeticCalculator;
 import org.gavaghan.geodesy.GlobalCoordinates;
-import org.postgis.Geometry;
-import org.postgis.GeometryCollection;
-import org.postgis.LinearRing;
-import org.postgis.MultiPolygon;
+import org.postgis.*;
 
 import com.jhlabs.map.proj.MercatorProjection;
 import com.jhlabs.map.proj.Projection;
@@ -183,30 +180,52 @@ public class MapPanel extends JPanel
 			GeometryCollection gc = (GeometryCollection)g;
 			for(Geometry x : gc.getGeometries())
 				calculateShapes(x);
+		} else if(g instanceof LineString) 
+		{
+			LineString ls = (LineString)g;
+			process(ls);
+		} else if(g instanceof MultiLineString)
+		{
+			MultiLineString mls = (MultiLineString)g;
+			for(LineString ls : mls.getLines())
+				process(ls);
 		} else
 		{
 			System.err.println("unknown geometry: " + g + " class: " + g.getClass());
 		}
 	}
 
+	private void process(LineString ls)
+	{
+		Path2D.Double path = new Path2D.Double(Path2D.WIND_EVEN_ODD);
+		path.append(pointComposedGeomToPath(ls, false), false);
+		shapes.add(path);
+	}
+
 	private void process(org.postgis.Polygon poly)
 	{
 		Path2D.Double path = new Path2D.Double(Path2D.WIND_EVEN_ODD);
 		for(int r = 0; r < poly.numRings() ; r++)
-		{
-			LinearRing ring = poly.getRing(r);
-			final org.postgis.Point[] points = ring.getPoints();
-			Point2D.Double point = new Point2D.Double();
-			projection.transform(points[0].x, points[0].y, point);
-			path.moveTo(point.x, point.y);
-			for(int i = 1 ; i < points.length ; i++)
-			{
-				org.postgis.Point p = points[i];
-				projection.transform(p.x, p.y, point);
-				path.lineTo(point.x, point.y);
-			}
-		}
+			path.append(pointComposedGeomToPath(poly.getRing(r), true), false);
 		shapes.add(new Area(path));
+	}
+
+	private Path2D.Double pointComposedGeomToPath(PointComposedGeom ring, boolean close)
+	{
+		Path2D.Double path = new Path2D.Double(Path2D.WIND_EVEN_ODD);
+		final org.postgis.Point[] points = ring.getPoints();
+		Point2D.Double startPoint = new Point2D.Double(), point = new Point2D.Double();
+		projection.transform(points[0].x, points[0].y, startPoint);
+		path.moveTo(startPoint.x, startPoint.y);
+		for(int i = 1 ; i < points.length ; i++)
+		{
+			org.postgis.Point p = points[i];
+			projection.transform(p.x, p.y, point);
+			path.lineTo(point.x, point.y);
+		}
+		if(close)
+			path.lineTo(startPoint.x, startPoint.y);
+		return path;
 	}
 
 	private void calculateBoundingBox()
