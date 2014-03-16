@@ -17,6 +17,7 @@ import org.gavaghan.geodesy.Ellipsoid;
 import org.gavaghan.geodesy.GeodeticCalculator;
 import org.gavaghan.geodesy.GlobalCoordinates;
 import org.postgis.Geometry;
+import org.postgis.GeometryCollection;
 import org.postgis.LinearRing;
 import org.postgis.MultiPolygon;
 
@@ -177,6 +178,11 @@ public class MapPanel extends JPanel
 		{
 			org.postgis.Point point = (org.postgis.Point)g;
 			pointMarkers.add(projection.transform(point.x, point.y, new Point2D.Double()));
+		} else if(g instanceof GeometryCollection)
+		{
+			GeometryCollection gc = (GeometryCollection)g;
+			for(Geometry x : gc.getGeometries())
+				calculateShapes(x);
 		} else
 		{
 			System.err.println("unknown geometry: " + g + " class: " + g.getClass());
