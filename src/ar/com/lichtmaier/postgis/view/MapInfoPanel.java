@@ -58,14 +58,13 @@ public class MapInfoPanel extends JPanel
 		validLabel.setText(null);
 		if(geo == null)
 			return;
-		SwingWorker<Map<String,Object>, Void> sw = new SwingWorker<Map<String,Object>, Void> () {
+		SwingWorker<Map<String,Object>, Void> sw = new SwingWorker<> () {
 			@Override
 			protected Map<String, Object> doInBackground() throws Exception
 			{
-				Map<String, Object> r = new HashMap<String, Object>();
+				Map<String, Object> r = new HashMap<>();
 				Connection c = main.getConnection();
-				PreparedStatement ps = c.prepareStatement("select ST_IsValidReason(?)");
-				try
+				try(PreparedStatement ps = c.prepareStatement("select ST_IsValidReason(?)"))
 				{
 					ps.setObject(1, new PGgeometry(geo));
 					ResultSet rs = ps.executeQuery();
@@ -74,9 +73,6 @@ public class MapInfoPanel extends JPanel
 						r.put("valid", rs.getString(1));
 					}
 					return r;
-				} finally
-				{
-					ps.close();
 				}
 			}
 			

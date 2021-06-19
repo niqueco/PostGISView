@@ -142,7 +142,7 @@ public class Tile
 		return Math.toDegrees(Math.atan(Math.sinh(n)));
 	}
 
-	static LinkedHashMap<Tile, Future<Image>> imageCache = new LinkedHashMap<Tile, Future<Image>>() {
+	static LinkedHashMap<Tile, Future<Image>> imageCache = new LinkedHashMap<>() {
 		private static final long serialVersionUID = 1L;
 		protected boolean removeEldestEntry(java.util.Map.Entry<Tile,Future<Image>> eldest) { return size() > 200; };
 	};
@@ -154,7 +154,7 @@ public class Tile
 		if(image == null)
 		{
 			if(f.canRead())
-				image = new CompletedFuture<Image>(ImageIO.read(f));
+				image = new CompletedFuture<>(ImageIO.read(f));
 			else
 			{
 				image = pool.submit(new Callable<Image>() {

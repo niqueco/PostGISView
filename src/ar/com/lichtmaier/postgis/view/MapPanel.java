@@ -25,9 +25,9 @@ public class MapPanel extends JPanel
 {
 	private static final long serialVersionUID = 1L;
 
-	final private List<Geometry> geos = new ArrayList<Geometry>();
-	final private List<Shape> shapes = new ArrayList<Shape>();
-	final private List<Point2D.Double> pointMarkers = new ArrayList<Point2D.Double>();
+	final private List<Geometry> geos = new ArrayList<>();
+	final private List<Shape> shapes = new ArrayList<>();
+	final private List<Point2D.Double> pointMarkers = new ArrayList<>();
 
 	private final Point2D.Double minCorner = new Point2D.Double(), maxCorner = new Point2D.Double();
 	
@@ -74,7 +74,7 @@ public class MapPanel extends JPanel
 	}
 	public Action zoomOutAction = new ZoomOutAction();
 
-	private List<Point2D.Double> errors = new ArrayList<Point2D.Double>();
+	private List<Point2D.Double> errors = new ArrayList<>();
 	
 	public MapPanel()
 	{
